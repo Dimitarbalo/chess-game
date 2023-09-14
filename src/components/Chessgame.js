@@ -41,6 +41,10 @@ const Chessgame = ({gameMode, computerColor}) => {
     };
 
     const isPawnMoveValid = (startH, startV, endH, endV) => {
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
         const dy = endV - startV;
         const dx = Math.abs(endH - startH);
 
@@ -71,6 +75,10 @@ const Chessgame = ({gameMode, computerColor}) => {
     };
 
     const isRookMoveValid = (startH, startV, endH, endV) => {
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
         const dy = Math.abs(endV - startV);
         const dx = Math.abs(endH - startH);
 
@@ -96,6 +104,10 @@ const Chessgame = ({gameMode, computerColor}) => {
         return false;
     };
     const isKnightMoveValid = (startH, startV, endH, endV, playerColor) => {
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
         const dy = Math.abs(endV - startV);
         const dx = Math.abs(endH - startH);
         // Knight's movement pattern: 2 squares in one direction and 1 square in the other
@@ -109,6 +121,12 @@ const Chessgame = ({gameMode, computerColor}) => {
         return false;
     };
     const isBishopMoveValid = (startH, startV, endH, endV) => {
+
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
+
         const dy = Math.abs(endV - startV);
         const dx = Math.abs(endH - startH);
         // Check if the bishop's movement is diagonal and clear (no pieces in the way)
@@ -159,6 +177,10 @@ const Chessgame = ({gameMode, computerColor}) => {
     };
 
     const isKingMoveValid = (startH, startV, endH, endV, playerColor) => {
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
         const dy = Math.abs(endV - startV);
         const dx = Math.abs(endH - startH);
         if (dx <= 1 && dy <= 1) {
@@ -942,7 +964,7 @@ const Chessgame = ({gameMode, computerColor}) => {
         }
         else if(gameMode === 'PvC'){
             if(currentPlayer === computerColor){
-               computerMove();
+                computerMove();
                 setCurrentPlayer(currentPlayer === "white" ? "black" : "white");
                 if(checkmate){
                     setCheckmate(true);
