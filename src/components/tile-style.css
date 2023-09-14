@@ -1,0 +1,26 @@
+.tile{
+    display: grid;
+    place-content: center;
+    width:  75px;
+    height: 75px;
+}
+.gray-tile{
+    background-color: lightgray;
+}
+.brown-tile{
+    background-color: #BF975F;
+}
+.tile img{
+    width: 55px;
+}
+.tile .chess-piece{
+    cursor: pointer;
+    width: 80px;
+    height: 80px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 53px;
+    margin-right: 5px;
+}
+
+
