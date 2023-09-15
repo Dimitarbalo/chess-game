@@ -442,6 +442,11 @@ const Chessgame = ({gameMode, computerColor}) => {
 
         const selectedPiece = pieces.find(p => p.horizontalAxis === selectedH && p.verticalAxis === selectedV);
 
+        if (!selectedPiece) {
+            console.log('Function canCaptureThreat: Selected piece not found');
+            return false;
+        }
+
         // Check if the selected piece is a king and the move captures the threatening piece
         if (selectedPiece && selectedPiece.image.includes("king") && threateningPiece.image.includes(currentPlayer === "white" ? "black" : "white")) {
             // Temporarily move the pieces to check if the king is still in check after capture
@@ -636,7 +641,7 @@ const Chessgame = ({gameMode, computerColor}) => {
         // Define the piece's current position
         const startX = piece.horizontalAxis;
         const startY = piece.verticalAxis;
-        const isKing = piece.image.includes("king");
+        const currentPlayerColor = piece.image.includes('white') ? 'white' : 'black';
 
         // Loop through all possible target positions on the board
         for (let targetY = 0; targetY < 8; targetY++) {
@@ -645,23 +650,63 @@ const Chessgame = ({gameMode, computerColor}) => {
                 if (startX === targetX && startY === targetY) {
                     continue;
                 }
+
                 // Check if the move is valid
                 if (isMoveValid(startX, startY, targetX, targetY)) {
                     // Check if the path is clear for non-knight pieces
-                    if (!piece.image.includes("knight") && !isPathClear(piece, targetX, targetY)) {
+                    if (!piece.image.includes('knight') && !isPathClear(piece, targetX, targetY)) {
                         continue; // Skip invalid moves
                     }
 
-                    // Prevent all pieces (except kings) from capturing the king
-                    if (!isKing && isKingMoveValid(startX, startY, targetX, targetY)) {
-                        continue; // Skip moves that capture the king
+                    // Temporarily make the move
+                    const originalHorizontal = piece.horizontalAxis;
+                    const originalVertical = piece.verticalAxis;
+
+                    piece.horizontalAxis = targetX;
+                    piece.verticalAxis = targetY;
+
+                    // Check if the move resolves the check
+                    if (!isKingInCheck(currentPlayerColor, pieces)) {
+                        validMoves.push({ targetH: targetX, targetV: targetY });
+                    } else if (isThreatened(piece, startX, startY, targetX, targetY)) {
+                        validMoves.push({ targetH: targetX, targetV: targetY });
                     }
-                    validMoves.push({ targetH: targetX, targetV: targetY });
+
+                    // Restore the original position
+                    piece.horizontalAxis = originalHorizontal;
+                    piece.verticalAxis = originalVertical;
                 }
             }
         }
         return validMoves;
     };
+
+// Helper function to check if a move captures the threatening piece
+    const isThreatened = (piece, startX, startY, targetX, targetY) => {
+        const currentPlayerColor = piece.image.includes('white') ? 'white' : 'black';
+
+        // Temporarily move the piece to the target position
+        const originalHorizontal = piece.horizontalAxis;
+        const originalVertical = piece.verticalAxis;
+        piece.horizontalAxis = targetX;
+        piece.verticalAxis = targetY;
+
+        // Check if the move captures the threatening piece
+        if (isKingInCheck(currentPlayerColor, pieces)) {
+            // Restore the original position
+            piece.horizontalAxis = originalHorizontal;
+            piece.verticalAxis = originalVertical;
+            return true;
+        }
+
+        // Restore the original position
+        piece.horizontalAxis = originalHorizontal;
+        piece.verticalAxis = originalVertical;
+        return false;
+    };
+
+
+
 
     const isPathClear = (piece, targetH, targetV) => {
         // Check if the path is clear for rooks, queens, and bishops
@@ -688,6 +733,18 @@ const Chessgame = ({gameMode, computerColor}) => {
         if (currentPlayer === computerColor) {
             // Get all computer-controlled pieces
             const computerPieces = pieces.filter((piece) => piece.image.includes(computerColor));
+
+            // Iterate through all computer-controlled pawns
+            for (const pawn of computerPieces.filter((piece) => piece.image.includes('pawn'))) {
+                if (pawn.verticalAxis === 0 || pawn.verticalAxis === 7) {
+                    // Replace the pawn with the next available replacement piece.
+                    pawn.image = `pieces/${replacementPieces[currentReplacementIndex]}_${computerColor}.png`;
+                    setCurrentReplacementIndex(currentReplacementIndex + 1);
+                    if (currentReplacementIndex === 3) {
+                        setCurrentReplacementIndex(0);
+                    }
+                }
+            }
 
             // Shuffle the computer's pieces randomly to add variety to its moves
             shuffleArray(computerPieces);
@@ -763,6 +820,7 @@ const Chessgame = ({gameMode, computerColor}) => {
 
         }
     };
+
 
     const replacementPieces = ["queen", "rook", "bishop", "knight"];
     const [currentReplacementIndex, setCurrentReplacementIndex] = useState(0);
