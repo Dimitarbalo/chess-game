@@ -336,10 +336,17 @@ const Chessgame = ({gameMode, computerColor}) => {
         return true; // Queen is making check
     };
     const isPathBlocked = (startH, startV, endH, endV) => {
+<<<<<<< HEAD
         const dx = Math.sign(endH - startH);
         const dy = Math.sign(endV - startV);
         let currentH = startH + dx;
         let currentV = startV + dy;
+=======
+        const deltaX = Math.sign(endH - startH);
+        const deltaY = Math.sign(endV - startV);
+        let currentH = startH + deltaX;
+        let currentV = startV + deltaY;
+>>>>>>> 81540403387116d401205db6394d5d8fd4aad127
 
         while (currentH !== endH || currentV !== endV) {
             const pieceAtPosition = pieces.find(p => p.horizontalAxis === currentH && p.verticalAxis === currentV);
@@ -347,8 +354,13 @@ const Chessgame = ({gameMode, computerColor}) => {
                 // There is a piece in the path, so it's blocked
                 return true;
             }
+<<<<<<< HEAD
             currentH += dx;
             currentV += dy;
+=======
+            currentH += deltaX;
+            currentV += deltaY;
+>>>>>>> 81540403387116d401205db6394d5d8fd4aad127
         }
         // The path is not blocked
         return false;
@@ -1265,12 +1277,21 @@ const Chessgame = ({gameMode, computerColor}) => {
             )}
             <div id="endingPage" className={checkmate ? "visible" : "hidden"}>
                 <p><b>Checkmate!</b></p>
+<<<<<<< HEAD
                 {gameMode === 'PvC' ? (
                     <p><b>{currentPlayer === 'white' ? 'White' : 'Black'} wins</b></p>
                 ) :  gameMode === 'PvP'  ? (
                     <p><b>{currentPlayer === 'white' ? 'Black' : 'White'} wins</b></p>
                 ) : <p></p>}
 
+=======
+                {currentPlayer === 'white' ?(
+                    <p><b> Black wins</b></p>
+                ) : (
+                    <p> <b>White wins</b></p>
+                )
+                }
+>>>>>>> 81540403387116d401205db6394d5d8fd4aad127
                 <button id="resetButton" onClick={() => setResetGame(true)}>Reset Game</button>
             </div>
         </div>
