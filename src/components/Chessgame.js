@@ -36,11 +36,11 @@ const Chessgame = ({gameMode, computerColor}) => {
     const [playerColor, setPlayerColor] = useState(null);
     const [playerVsComputer, setPlayerVsComputer] = useState(false);
 
-    const togglePlayerVsComputer = () => {
-        setPlayerVsComputer(prevState => !prevState);
-    };
-
     const isPawnMoveValid = (startH, startV, endH, endV) => {
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
         const dy = endV - startV;
         const dx = Math.abs(endH - startH);
 
@@ -71,6 +71,10 @@ const Chessgame = ({gameMode, computerColor}) => {
     };
 
     const isRookMoveValid = (startH, startV, endH, endV) => {
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
         const dy = Math.abs(endV - startV);
         const dx = Math.abs(endH - startH);
 
@@ -96,6 +100,10 @@ const Chessgame = ({gameMode, computerColor}) => {
         return false;
     };
     const isKnightMoveValid = (startH, startV, endH, endV, playerColor) => {
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
         const dy = Math.abs(endV - startV);
         const dx = Math.abs(endH - startH);
         // Knight's movement pattern: 2 squares in one direction and 1 square in the other
@@ -109,6 +117,12 @@ const Chessgame = ({gameMode, computerColor}) => {
         return false;
     };
     const isBishopMoveValid = (startH, startV, endH, endV) => {
+
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
+
         const dy = Math.abs(endV - startV);
         const dx = Math.abs(endH - startH);
         // Check if the bishop's movement is diagonal and clear (no pieces in the way)
@@ -132,7 +146,6 @@ const Chessgame = ({gameMode, computerColor}) => {
                 return true;
             }
         }
-
         return false;
     };
     const isQueenMoveValid = (startH, startV, endH, endV) => {
@@ -159,8 +172,13 @@ const Chessgame = ({gameMode, computerColor}) => {
     };
 
     const isKingMoveValid = (startH, startV, endH, endV, playerColor) => {
+        if (startH === endH && startV === endV) {
+            // Bishop is already at the destination, return true
+            return true;
+        }
         const dy = Math.abs(endV - startV);
         const dx = Math.abs(endH - startH);
+
         if (dx <= 1 && dy <= 1) {
             const pieceAtDestination = pieces.find(p => p.horizontalAxis === endH && p.verticalAxis === endV);
             if (!pieceAtDestination || (!pieceAtDestination.image.includes(currentPlayer) && !pieceAtDestination.image.includes(playerColor))) {
@@ -274,18 +292,16 @@ const Chessgame = ({gameMode, computerColor}) => {
                     return false; // There's a piece blocking the path
                 }
             }
-
             return true;
         }
-
         return false;
     };
 
     const isQueenMakingCheck = (queenH, queenV, kingH, kingV, kingCanCapture = false) => {
-        const vDiff = Math.abs(queenV - kingV);
-        const hDiff = Math.abs(queenH - kingH);
+        const dy = Math.abs(queenV - kingV);
+        const dx = Math.abs(queenH - kingH);
 
-        if ((vDiff > 0 && hDiff > 0 && vDiff !== hDiff) || (vDiff === 0 && hDiff === 0)) {
+        if ((dy > 0 && dx > 0 && dy !== dx) || (dy === 0 && dx === 0)) {
             return false; // Queen is not threatening the king
         }
 
@@ -309,27 +325,40 @@ const Chessgame = ({gameMode, computerColor}) => {
             const originalKingV = kingV;
             kingH = queenH;
             kingV = queenV;
-
             if (!isKingInCheck()) {
                 kingH = originalKingH;
                 kingV = originalKingV;
                 return false; // King can capture the queen without being in check
             }
-
             kingH = originalKingH;
             kingV = originalKingV;
         }
-
         return true; // Queen is making check
     };
+    const isPathBlocked = (startH, startV, endH, endV) => {
+        const dx = Math.sign(endH - startH);
+        const dy = Math.sign(endV - startV);
+        let currentH = startH + dx;
+        let currentV = startV + dy;
 
+        while (currentH !== endH || currentV !== endV) {
+            const pieceAtPosition = pieces.find(p => p.horizontalAxis === currentH && p.verticalAxis === currentV);
+            if (pieceAtPosition) {
+                // There is a piece in the path, so it's blocked
+                return true;
+            }
+            currentH += dx;
+            currentV += dy;
+        }
+        // The path is not blocked
+        return false;
+    };
     const isKingInCheck = () => {
         const playerKing = pieces.find(p => p.image.includes(currentPlayer) && p.image.includes("king"));
 
         if (!playerKing) {
             return false; // Player's king not found
         }
-
         const kingH = playerKing.horizontalAxis;
         const kingV = playerKing.verticalAxis;
 
@@ -343,15 +372,21 @@ const Chessgame = ({gameMode, computerColor}) => {
 
             if (piece.image.includes("pawn")) {
                 if (isPawnMakingCheck(pieceH, pieceV, kingH, kingV)) {
-                    setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
-                    setSelectedPiece(null);
-                    return true;
+                    // Check if the pawn can capture the king when the path is not blocked
+                    if (!isPathBlocked(pieceH, pieceV, kingH, kingV)) {
+                        setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
+                        setSelectedPiece(null);
+                        return true;
+                    }
                 }
             } else if (piece.image.includes("rook")) {
                 if (isRookMakingCheck(pieceH, pieceV, kingH, kingV)) {
-                    setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
-                    setSelectedPiece(null);
-                    return true;
+                    // Check if the rook can capture the king when the path is not blocked
+                    if (!isPathBlocked(pieceH, pieceV, kingH, kingV)) {
+                        setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
+                        setSelectedPiece(null);
+                        return true;
+                    }
                 }
             } else if (piece.image.includes("knight")) {
                 if (isKnightMakingCheck(pieceH, pieceV, kingH, kingV)) {
@@ -361,20 +396,27 @@ const Chessgame = ({gameMode, computerColor}) => {
                 }
             } else if (piece.image.includes("bishop")) {
                 if (isBishopMakingCheck(pieceH, pieceV, kingH, kingV)) {
-                    setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
-                    setSelectedPiece(null);
-                    return true;
+                    // Check if the bishop can capture the king when the path is not blocked
+                    if (!isPathBlocked(pieceH, pieceV, kingH, kingV)) {
+                        setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
+                        setSelectedPiece(null);
+                        return true;
+                    }
                 }
             } else if (piece.image.includes("queen")) {
                 if (isQueenMakingCheck(pieceH, pieceV, kingH, kingV) || isQueenMakingCheck(pieceH, pieceV, kingH, kingV, true)) {
-                    setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
-                    setSelectedPiece(null);
-                    return true;
+                    // Check if the queen can capture the king when the path is not blocked
+                    if (!isPathBlocked(pieceH, pieceV, kingH, kingV)) {
+                        setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
+                        setSelectedPiece(null);
+                        return true;
+                    }
                 }
             }
         }
         return false;
     };
+
     const isMoveValid = (startH, startV, endH, endV) => {
         const selectedPiece = pieces.find(p => p.horizontalAxis === startH && p.verticalAxis === startV);
         const pieceType = selectedPiece.image;
@@ -419,6 +461,11 @@ const Chessgame = ({gameMode, computerColor}) => {
         }
 
         const selectedPiece = pieces.find(p => p.horizontalAxis === selectedH && p.verticalAxis === selectedV);
+
+        if (!selectedPiece) {
+            console.log('Function canCaptureThreat: Selected piece not found');
+            return false;
+        }
 
         // Check if the selected piece is a king and the move captures the threatening piece
         if (selectedPiece && selectedPiece.image.includes("king") && threateningPiece.image.includes(currentPlayer === "white" ? "black" : "white")) {
@@ -515,7 +562,6 @@ const Chessgame = ({gameMode, computerColor}) => {
                 }
             }
         }
-
         return false;
     };
 
@@ -614,7 +660,7 @@ const Chessgame = ({gameMode, computerColor}) => {
         // Define the piece's current position
         const startX = piece.horizontalAxis;
         const startY = piece.verticalAxis;
-        const isKing = piece.image.includes("king");
+        const currentPlayerColor = piece.image.includes('white') ? 'white' : 'black';
 
         // Loop through all possible target positions on the board
         for (let targetY = 0; targetY < 8; targetY++) {
@@ -623,22 +669,59 @@ const Chessgame = ({gameMode, computerColor}) => {
                 if (startX === targetX && startY === targetY) {
                     continue;
                 }
+
                 // Check if the move is valid
                 if (isMoveValid(startX, startY, targetX, targetY)) {
                     // Check if the path is clear for non-knight pieces
-                    if (!piece.image.includes("knight") && !isPathClear(piece, targetX, targetY)) {
+                    if (!piece.image.includes('knight') && !isPathClear(piece, targetX, targetY)) {
                         continue; // Skip invalid moves
                     }
 
-                    // Prevent all pieces (except kings) from capturing the king
-                    if (!isKing && isKingMoveValid(startX, startY, targetX, targetY)) {
-                        continue; // Skip moves that capture the king
+                    // Temporarily make the move
+                    const originalHorizontal = piece.horizontalAxis;
+                    const originalVertical = piece.verticalAxis;
+
+                    piece.horizontalAxis = targetX;
+                    piece.verticalAxis = targetY;
+
+                    // Check if the move resolves the check
+                    if (!isKingInCheck(currentPlayerColor, pieces)) {
+                        validMoves.push({ targetH: targetX, targetV: targetY });
+                    } else if (isThreatened(piece, startX, startY, targetX, targetY)) {
+                        validMoves.push({ targetH: targetX, targetV: targetY });
                     }
-                    validMoves.push({ targetH: targetX, targetV: targetY });
+
+                    // Restore the original position
+                    piece.horizontalAxis = originalHorizontal;
+                    piece.verticalAxis = originalVertical;
                 }
             }
         }
         return validMoves;
+    };
+
+// Helper function to check if a move captures the threatening piece
+    const isThreatened = (piece, startX, startY, targetX, targetY) => {
+        const currentPlayerColor = piece.image.includes('white') ? 'white' : 'black';
+
+        // Temporarily move the piece to the target position
+        const originalHorizontal = piece.horizontalAxis;
+        const originalVertical = piece.verticalAxis;
+        piece.horizontalAxis = targetX;
+        piece.verticalAxis = targetY;
+
+        // Check if the move captures the threatening piece
+        if (isKingInCheck(currentPlayerColor, pieces)) {
+            // Restore the original position
+            piece.horizontalAxis = originalHorizontal;
+            piece.verticalAxis = originalVertical;
+            return true;
+        }
+
+        // Restore the original position
+        piece.horizontalAxis = originalHorizontal;
+        piece.verticalAxis = originalVertical;
+        return false;
     };
 
     const isPathClear = (piece, targetH, targetV) => {
@@ -653,11 +736,9 @@ const Chessgame = ({gameMode, computerColor}) => {
             if (isSquareOccupied(x, y)) {
                 return false; // Path is blocked
             }
-
             x += dx;
             y += dy;
         }
-
         return true; // Path is clear
     };
 
@@ -667,6 +748,17 @@ const Chessgame = ({gameMode, computerColor}) => {
             // Get all computer-controlled pieces
             const computerPieces = pieces.filter((piece) => piece.image.includes(computerColor));
 
+            // Iterate through all computer-controlled pawns
+            for (const pawn of computerPieces.filter((piece) => piece.image.includes('pawn'))) {
+                if (pawn.verticalAxis === 0 || pawn.verticalAxis === 7) {
+                    // Replace the pawn with the next available replacement piece.
+                    pawn.image = `pieces/${replacementPieces[currentReplacementIndex]}_${computerColor}.png`;
+                    setCurrentReplacementIndex(currentReplacementIndex + 1);
+                    if (currentReplacementIndex === 3) {
+                        setCurrentReplacementIndex(0);
+                    }
+                }
+            }
             // Shuffle the computer's pieces randomly to add variety to its moves
             shuffleArray(computerPieces);
 
@@ -693,7 +785,7 @@ const Chessgame = ({gameMode, computerColor}) => {
                         capturedPiece = pieces[capturedPieceIndex];
 
                         // Prevent kings from capturing each other
-                        if (piece.image.includes("king") && capturedPiece.image.includes("king")) {
+                        if (capturedPiece.image.includes("king")) {
                             continue; // Skip this move
                         }
 
@@ -734,6 +826,7 @@ const Chessgame = ({gameMode, computerColor}) => {
                 console.log('Move not allowed');
                 setCurrentPlayer(computerColor === 'white' ? 'white' : 'black');
                 if(isCheckmate()){
+                    setCurrentPlayer(computerColor === 'white' ? 'white' : 'black');
                     setCheckmate(true);
                     return checkmate;
                 }
@@ -744,6 +837,8 @@ const Chessgame = ({gameMode, computerColor}) => {
 
     const replacementPieces = ["queen", "rook", "bishop", "knight"];
     const [currentReplacementIndex, setCurrentReplacementIndex] = useState(0);
+
+
 
     const movePiece = (startH, startV, endH, endV) => {
         const movedPieceIndex = pieces.findIndex(p => p.horizontalAxis === startH && p.verticalAxis === startV);
@@ -792,22 +887,61 @@ const Chessgame = ({gameMode, computerColor}) => {
                     // Handle the case where the king is still in check after the capture
                     console.log("Move not allowed - King would be in checkasa");
                     if(selectedPiece){
+                        console.log('1');
                         const {image: selectedImage } = selectedPiece;
                         if(selectedImage.includes("king") && isKingMoveValid(startH,startV,endH,endV)){
+                            console.log('2');
                             movedPiece.horizontalAxis = endH;
                             movedPiece.verticalAxis = endV;
                             return;
                         }
+                        else{
+                            console.log('3');
+                            if(isMoveValid(startH,startV,endH,endV)){
+                                console.log('4');
+                                movedPiece.horizontalAxis = endH;
+                                movedPiece.verticalAxis = endV;
+                                return;
+                            }
+                            else{
+                                pieces.push(capturedPiece);
+                                setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
+                            }
+                        }
                     }
+                    console.log('5');
                     // Restore the captured piece to its original position
-                    pieces.push(capturedPiece);
-                    setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
+
 
                     return false;
                 } else {
+                    console.log('6');
                     // If the king is not in check after the capture, it's a valid move
-                    movedPiece.horizontalAxis = endH;
-                    movedPiece.verticalAxis = endV;
+                    if (isMoveValid(startH, startV, endH, endV)) {
+                        console.log('112');
+                        const originalHorizontal = movedPiece.horizontalAxis;
+                        const originalVertical = movedPiece.verticalAxis;
+
+                        // Temporarily move the piece
+                        movedPiece.horizontalAxis = endH;
+                        movedPiece.verticalAxis = endV;
+
+                        // Check if the move results in the king being in check
+                        if (isKingInCheck()) {
+                            // Restore the captured piece to its original position
+                            pieces.push(capturedPiece);
+                        } else {
+                            // If the move is valid and doesn't result in the king being in check, keep the new position
+                            movedPiece.horizontalAxis = endH;
+                            movedPiece.verticalAxis = endV;
+                            return;
+                        }
+
+                        // Restore the original position
+                        movedPiece.horizontalAxis = originalHorizontal;
+                        movedPiece.verticalAxis = originalVertical;
+                        return false;
+                    }
                 }
             }
         } else {
@@ -927,6 +1061,7 @@ const Chessgame = ({gameMode, computerColor}) => {
                         setSelectedPiece(null);
                     } else {
                         movePiece(selectedH, selectedV, horizontalAxis, verticalAxis);
+                        document.getElementById('check-message').textContent = ' ';
                         setSelectedPiece(null);
                         setCurrentPlayer(currentPlayer === "white" ? "black" : "white"); // Toggle player's turn
                     }
@@ -942,10 +1077,12 @@ const Chessgame = ({gameMode, computerColor}) => {
         }
         else if(gameMode === 'PvC'){
             if(currentPlayer === computerColor){
-               computerMove();
+                computerMove();
                 setCurrentPlayer(currentPlayer === "white" ? "black" : "white");
                 if(checkmate){
                     setCheckmate(true);
+                    setCurrentPlayer(currentPlayer === "white" ? "white" : "black");
+
                 }
 
             }
@@ -1081,7 +1218,6 @@ const Chessgame = ({gameMode, computerColor}) => {
             );
         }
     }
-
     const onStartGame = (mode,color) => {
         setPlayerColor(color);
         setCurrentPlayer('white');
@@ -1129,13 +1265,12 @@ const Chessgame = ({gameMode, computerColor}) => {
             )}
             <div id="endingPage" className={checkmate ? "visible" : "hidden"}>
                 <p><b>Checkmate!</b></p>
-                {currentPlayer === 'white' ?(
-                    <p><b> Black wins</b></p>
-                ) : (
-                    <p> <b>White wins</b></p>
-                )
+                {gameMode === 'PvC' ? (
+                    <p><b>{currentPlayer === 'white' ? 'White' : 'Black'} wins</b></p>
+                ) :  gameMode === 'PvP'  ? (
+                    <p><b>{currentPlayer === 'white' ? 'Black' : 'White'} wins</b></p>
+                ) : <p></p>}
 
-                }
                 <button id="resetButton" onClick={() => setResetGame(true)}>Reset Game</button>
             </div>
         </div>

@@ -1,18 +1,18 @@
 import React, { useState } from "react";
 import "./App.css";
-import Chessgame from "../../chess/src/components/Chessgame";
+import Chessgame from "./components/Chessgame";
 import StartingPage from "./components/StartingPage";
 
 function App() {
   const [playerColor, setPlayerColor] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameMode, setGameMode] = useState("");
-  const [computerColor, setComputerColor] = useState(""); // New state for computer color
+  const [computerColor, setComputerColor] = useState("");
 
   const onSelectColor = (mode, color) => {
     setGameMode(mode);
     setPlayerColor(color);
-    setComputerColor(color === "white" ? "black" : "white"); // Set computer's color based on player's choice
+    setComputerColor(color === "white" ? "black" : "white");
     setGameStarted(true);
   };
 
@@ -21,7 +21,7 @@ function App() {
         {playerColor ? (
             <Chessgame
                 gameMode={gameMode}
-                computerColor={computerColor} // Pass computer's color to Chessgame
+                computerColor={computerColor}
             />
         ) : (
             <StartingPage onStartGame={onSelectColor} />

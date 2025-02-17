@@ -1,7 +1,11 @@
-#app{
+#app {
   display: grid;
   place-content: center;
   height: 100vh;
-  /*background-color: #33b6e1;*/
-  background: linear-gradient(to bottom, #b028ff , #0066ff 90%);
+  animation: changeColor 4s infinite alternate ease-in-out;
+}
+
+@keyframes changeColor {
+  0% { background-color: #dca44d; }
+  100% { background-color: #ae7c2a; }
 }
