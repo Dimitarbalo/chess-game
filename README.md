@@ -1,4 +1,4 @@
-# Chess Game
+# Chess Game ♟️
 
 A fully functional chess game built with React. This project allows players to play chess against each other or against the computer.
 
